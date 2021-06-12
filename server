@@ -1,0 +1,44 @@
+# server video chat library
+import socket
+import pickle
+import cv2
+
+# activate internal camera
+cap = cv2.VideoCapture(0)
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+ip="127.0.0.1"
+port=1234
+socket_address = (ip,port)
+
+#bind socket 
+s.bind((ip,port))
+print("Binded")
+
+#socket listen
+s.listen()
+print("LISTENING AT:",socket_address)
+
+#accept client request
+o , addr = s.accept()
+print(o)
+print("Connected to {}".format(addr))
+
+while True:
+    ret , photo = cap.read()
+    bret, buffer = cv2.imencode('.jpg',photo)
+    bytedata = pickle.dumps(buffer)
+    o.send(bytedata)
+
+    x = o.recv(1000000)
+    
+    try:
+        data = pickle.loads(x)
+        data = cv2.imdecode(data,cv2.IMREAD_COLOR)
+        if data is not None :
+            cv2.imshow('Server side life Video ',data)
+            if cv2.waitKey(10) == 13 :
+                break
+    except: 
+        print("Waiting for the client!")
+cv2.destroyAllWindows()
+cap.release()
