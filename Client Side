@@ -1,0 +1,37 @@
+#Library 
+import socket
+import pickle
+import cv2
+
+#socket and external Video info
+cap = cv2.VideoCapture(1)
+s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+ip="127.0.0.1"
+port=1234
+
+#connect session
+s.connect((ip,port))
+
+
+while True:
+    x = s.recv(1000000)
+    print("Recieved")
+    
+    ret , photo = cap.read()
+    bret, buffer = cv2.imencode('.jpg',photo)
+    bytedata = pickle.dumps(buffer)
+    s.send(bytedata)
+    
+    try:
+        data = pickle.loads(x)
+        data = cv2.imdecode(data,cv2.IMREAD_COLOR)
+        if data is not None :
+            cv2.imshow('Client Side Live Video',data)
+            if cv2.waitKey(10) == 13 :
+                break
+    except: 
+        print("Waiting for the server!")
+
+
+cv2.destroyAllWindows()
+cap.release()
